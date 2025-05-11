@@ -1,0 +1,11 @@
+langchain
+langchain-community
+langchain-ollama
+langchain-huggingface
+ipykernel
+pypdf
+faiss-cpu
+streamlit
+python-dotenv
+transformers
+accelerate
