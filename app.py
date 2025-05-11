@@ -10,7 +10,7 @@ from langchain.chains import create_retrieval_chain
 import streamlit as st 
 import os 
 
-
+os.makedirs('data', exist_ok=True)
 
 def ingestion(data_file_path:str) :
     """
