@@ -9,7 +9,7 @@
 - ✅ Upload your CV in PDF format
 - ✅ Input job requirements as your query
 - ✅ Receive insights on how your CV fits the job
-- ✅ Runs locally for full **data privacy**
+- ✅ Runs locally 
 - ✅ Built with LangChain + FAISS + Ollama
 - ✅ Interactive Streamlit web interface
 
@@ -40,6 +40,7 @@
 ### 2. Clone the Repository
 
 git clone https://github.com/your-username/rag-cv-analyzer.git
+
 cd rag-cv-analyzer
 
 ### 3. Install Dependencies
