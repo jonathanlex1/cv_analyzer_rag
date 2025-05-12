@@ -35,7 +35,7 @@
 - [Ollama](https://ollama.com/) installed locally
 - Download the model locally using:
   ```bash
-  ollama pull llama3
+  ollama run llama3.2
 
 ### 2. Clone the Repository
 
