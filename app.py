@@ -24,37 +24,29 @@ def ingestion(data_file_path:str) :
     splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap = 100, separators=['\n'])
     docs_splitted = splitter.split_documents(docs)
     model_embedding = OllamaEmbeddings(model='llama3.2')
-    faiss_db = FAISS.from_documents(docs_splitted, model_embedding)
-    return faiss_db
+    return FAISS.from_documents(docs_splitted, model_embedding)
+    
+@st.cache_resource(show_spinner=False)
+def load_vectorstore_once(data_file_path):
+    return ingestion(data_file_path)
 
 
-def retriever(_retriever) : 
+def retriever(vector_db) : 
     """
     create retriever chain with prompt, llm and retriever
     """
 
-    prompt_template = """
-    ("system", "You are a professional HR assistant helping evaluate how well a CV fits a job description."),
-    ("human", 
-    "Job Requirement:
-    {input}
-        
-    "
-    "Relevant Content from the CV:
-    {context}
-        
-    "
-    "Analyze the match and list strengths, gaps, an recommendation.")
-    """
-    prompt = ChatPromptTemplate([prompt_template])
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "You are a professional HR assistant helping evaluate how well a CV fits a job description."),
+        ("human", 
+         "Job Requirement:\n{input}\n\n"
+         "Relevant Content from the CV:\n{context}\n\n"
+         "Analyze the match and list strengths, gaps, and recommendations.")
+    ])
     llm = OllamaLLM(model = 'llama3.2', temperature=0)
-    vector_db = ingestion(_retriever)
     document_chain = create_stuff_documents_chain(llm, prompt)
     retriever = vector_db.as_retriever()
-    retriever_chain = create_retrieval_chain(retriever, document_chain)
-
-    return retriever_chain
-
+    return create_retrieval_chain(retriever, document_chain)
 
 def main() : 
     
@@ -80,11 +72,12 @@ def main() :
         with open(uploaded_file_path, 'wb') as file : 
             file.write(uploaded_file.getbuffer())
 
-        query = st.chat_input('Tell your job requirements')
+        query = st.chat_input('Tell the job requirements that you want to apply')
 
         if query :
-            with st.spinner('Wait') : 
-                retriever_chain = retriever(uploaded_file_path)
+            with st.spinner('Analyzing...') : 
+                vector_db = load_vectorstore_once(uploaded_file_path)
+                retriever_chain = retriever(vector_db)
                 result = retriever_chain.invoke({'input' : query})
             st.success('✅ Analysis complete!')
             st.write(result['answer'])
@@ -93,7 +86,7 @@ def main() :
             os.remove(uploaded_file_path) 
 
     else : 
-        query = st.chat_input('Tell your job requirements')
+        query = st.chat_input('Tell the job requirements that you want to apply')
         if query : 
             st.warning('You have to upload your cv first')
             
