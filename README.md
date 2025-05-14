@@ -39,7 +39,7 @@
 
 ### 2. Clone the Repository
 
-git clone https://github.com/your-username/rag-cv-analyzer.git
+git clone https://github.com/jonathanlex1/rag-cv-analyzer.git
 
 cd rag-cv-analyzer
 
