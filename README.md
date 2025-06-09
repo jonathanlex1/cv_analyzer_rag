@@ -1,6 +1,6 @@
 # 🤖 RAG CV Analyzer – Match Your CV with Job Requirements using LLMs
 
-**RAG CV Analyzer** is a chatbot powered by Retrieval-Augmented Generation (RAG) that helps analyze how well your **CV (Curriculum Vitae)** aligns with a given **Job Requirement**. It uses a local LLM (via Ollama) to provide context-aware, private responses.
+RAG CV Analyzer is a chatbot powered by Retrieval-Augmented Generation (RAG) designed to evaluate how well your Curriculum Vitae (CV) aligns with specific Job Requirements. It leverages FastAPI as the backend to handle file uploads and user interactions, while using a local LLM through Ollama to generate private, context-aware responses—ensuring data privacy and fully local processing without reliance on external cloud services.
 
 ---
 
@@ -10,8 +10,9 @@
 - ✅ Input job requirements as your query
 - ✅ Receive insights on how your CV fits the job
 - ✅ Runs locally for full **data privacy**
-- ✅ Built with LangChain + FAISS + Ollama
-- ✅ Interactive Streamlit web interface
+- ✅ Built with LangChain + FAISS + Ollama 
+- ✅ FastAPI integration to RAG (Backend)
+- ✅ Streamlit web interface (Frontend)
 
 ---
 
@@ -38,11 +39,20 @@
   ollama pull llama3
 
 ### 2. Clone the Repository
-
+```bash
 git clone https://github.com/your-username/rag-cv-analyzer.git
-cd rag-cv-analyzer
+```
 
 ### 3. Install Dependencies
 
 pip install -r requirements.txt
 
+### 4. Run API (Backend)
+```bash
+py app.py
+```
+
+### 5. Run Streamlit (Frontend)
+```bash
+streamlit run client.py
+```

@@ -9,3 +9,6 @@ streamlit
 python-dotenv
 transformers
 accelerate
+fastapi
+uvicorn
+python-multipart

@@ -7,10 +7,10 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
 
-import streamlit as st 
+from fastapi import FastAPI, File, UploadFile, Form
+import uvicorn
+from pydantic import BaseModel
 import os 
-
-os.makedirs('data', exist_ok=True)
 
 def ingestion(data_file_path:str) :
     """
@@ -25,17 +25,11 @@ def ingestion(data_file_path:str) :
     docs_splitted = splitter.split_documents(docs)
     model_embedding = OllamaEmbeddings(model='llama3.2')
     return FAISS.from_documents(docs_splitted, model_embedding)
-    
-@st.cache_resource(show_spinner=False)
-def load_vectorstore_once(data_file_path):
-    return ingestion(data_file_path)
-
 
 def retriever(vector_db) : 
     """
     create retriever chain with prompt, llm and retriever
     """
-
     prompt = ChatPromptTemplate.from_messages([
         ("system", "You are a professional HR assistant helping evaluate how well a CV fits a job description."),
         ("human", 
@@ -48,49 +42,38 @@ def retriever(vector_db) :
     retriever = vector_db.as_retriever()
     return create_retrieval_chain(retriever, document_chain)
 
-def main() : 
+class Response(BaseModel) : 
+    answer:str
+    prompt:str
+
+app = FastAPI()
+
+@app.get('/')
+def greeting() : 
+    return 'hello'
+
+@app.post('/', response_model= Response)
+async def upload_file(prompt:str= Form(...), file: UploadFile=File(...)) :
+    #upload file
+    path = 'data/'
+    if not os.path.exists(path) : 
+        os.makedirs(path, exist_ok=True)
+
+    content_uploaded = file.filename
+    filepath_uploaded = os.path.join(path, content_uploaded)
     
-    st.header('🤖 RAG Chatbot to Analyze and Match Your CV with Job Requirements')
-
-    #upload pdf document
-    with st.sidebar:
-        st.title("🤖 RAG CV Chatbot")
-        st.markdown("### 🎯 Let's Match Your CV to Your Dream Job!")
-        st.markdown("Upload your **CV (PDF)** and chat with an AI assistant to check how well you match your desired job.")
-        
-        uploaded_file = st.file_uploader("📄 Upload your CV here:", type="pdf")
-
-        st.markdown("---")
-        st.markdown("💡 *Tip: Make sure your resume is updated for best results!*")
+    with open(filepath_uploaded, 'wb') as f : 
+        f.write(await file.read())
     
-        
-    # retrieving 
-    if uploaded_file : 
-        
-        uploaded_file_path = os.path.join('data', uploaded_file.name)
-            
-        with open(uploaded_file_path, 'wb') as file : 
-            file.write(uploaded_file.getbuffer())
+    vector_db = ingestion(filepath_uploaded)
 
-        query = st.chat_input('Tell the job requirements that you want to apply')
+    retriever_chain = retriever(vector_db)
 
-        if query :
-            with st.spinner('Analyzing...') : 
-                vector_db = load_vectorstore_once(uploaded_file_path)
-                retriever_chain = retriever(vector_db)
-                result = retriever_chain.invoke({'input' : query})
-            st.success('✅ Analysis complete!')
-            st.write(result['answer'])
-
-        if os.path.exists(uploaded_file_path) : 
-            os.remove(uploaded_file_path) 
-
-    else : 
-        query = st.chat_input('Tell the job requirements that you want to apply')
-        if query : 
-            st.warning('You have to upload your cv first')
-            
+    result = retriever_chain.invoke({'input' : prompt})
+    response = result['answer']
     
+    return Response(prompt= prompt, answer=response) 
+
 
 if __name__ == '__main__' :
-    main()
+    uvicorn.run(app, port=8000)
